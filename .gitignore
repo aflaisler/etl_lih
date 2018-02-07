@@ -1,4 +1,6 @@
 # sensitive
+*.xlsx
+*.xls
 *.json
 *.key
 *.csv
