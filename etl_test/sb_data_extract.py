@@ -28,9 +28,10 @@ def get_previous_week_date(dayname, start_=False):
 
 
 # Initialize SocialbakersApi and return a FacebookObject
-def init_socialbackers_api(credentials_path="./client/credentials.json"):
+def init_socialbackers_api(credentials_path="/client/credentials.json"):
     # get the socialbakers api secret key
-    sb_credentials = json.load(open(credentials_path))
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    sb_credentials = json.load(open(dir_path + credentials_path))
     token = sb_credentials['socialbakers']['token']
     secret = sb_credentials['socialbakers']['secret']
     # Initialize API
@@ -82,7 +83,7 @@ if __name__ == "__main__":
 
     # Initialize the api and get the list of profiles in the account
     print "API initialisation..."
-    fb = init_socialbackers_api(credentials_path="./client/credentials.json")
+    fb = init_socialbackers_api(credentials_path="/client/credentials.json")
     profiles = fb.get_profiles()
     profiles_json = json.loads(profiles)
     ids_ = [profiles_json['profiles'][i]['id'] for i in range(len(profiles_json['profiles']))]
