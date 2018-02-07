@@ -10,6 +10,8 @@ weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday',
             'Friday', 'Saturday', 'Sunday']
 
 # Helper to get last week dates (Monday to Sunday)
+
+
 def get_previous_byday(dayname, start_=False):
     start_date = datetime.today().date()
     day_num = start_date.weekday()
@@ -28,8 +30,6 @@ def get_previous_byday(dayname, start_=False):
 start = get_previous_byday('Monday', start_=True).strftime('%Y-%m-%d')
 end = get_previous_byday('Sunday').strftime('%Y-%m-%d')
 
-start
-end
 # get the socialbakers api secret key
 credentials_path = "./client/credentials.json"
 sb_credentials = json.load(open(credentials_path))
@@ -45,25 +45,25 @@ fb = SNO.FacebookObject()
 # Check Fields Available in . / socialbakers / objects / socialnetworkobject
 
 fb_fields = [
-    SNO.FacebookObject.Metric.comments_count_by_paid_status,
-    SNO.FacebookObject.Metric.comments_count_by_type,
-    SNO.FacebookObject.Metric.fans_change,
     SNO.FacebookObject.Metric.fans_count_lifetime,
-    SNO.FacebookObject.Metric.fans_count_lifetime_by_country,
-    SNO.FacebookObject.Metric.interactions_count,
-    SNO.FacebookObject.Metric.interactions_count_by_paid_status,
-    SNO.FacebookObject.Metric.interactions_count_by_type,
-    SNO.FacebookObject.Metric.interactions_per_1000_fans,
-    SNO.FacebookObject.Metric.interactions_per_1000_fans_by_type,
-    SNO.FacebookObject.Metric.page_posts_by_app,
-    SNO.FacebookObject.Metric.page_posts_count,
-    SNO.FacebookObject.Metric.page_posts_count_by_paid_status,
-    SNO.FacebookObject.Metric.page_posts_count_by_type,
-    SNO.FacebookObject.Metric.reactions_count,
-    SNO.FacebookObject.Metric.reactions_count_by_paid_status,
-    SNO.FacebookObject.Metric.reactions_count_by_reaction_type,
-    SNO.FacebookObject.Metric.reactions_count_by_type,
-    SNO.FacebookObject.Metric.shares_count
+    SNO.FacebookObject.Metric.fans_change
+    # SNO.FacebookObject.Metric.comments_count_by_paid_status,
+    # SNO.FacebookObject.Metric.comments_count_by_type,
+    # SNO.FacebookObject.Metric.fans_count_lifetime_by_country,
+    # SNO.FacebookObject.Metric.interactions_count,
+    # SNO.FacebookObject.Metric.interactions_count_by_paid_status,
+    # SNO.FacebookObject.Metric.interactions_count_by_type,
+    # SNO.FacebookObject.Metric.interactions_per_1000_fans,
+    # SNO.FacebookObject.Metric.interactions_per_1000_fans_by_type,
+    # SNO.FacebookObject.Metric.page_posts_by_app,
+    # SNO.FacebookObject.Metric.page_posts_count,
+    # SNO.FacebookObject.Metric.page_posts_count_by_paid_status,
+    # SNO.FacebookObject.Metric.page_posts_count_by_type,
+    # SNO.FacebookObject.Metric.reactions_count,
+    # SNO.FacebookObject.Metric.reactions_count_by_paid_status,
+    # SNO.FacebookObject.Metric.reactions_count_by_reaction_type,
+    # SNO.FacebookObject.Metric.reactions_count_by_type,
+    # SNO.FacebookObject.Metric.shares_count
     # SNO.FacebookObject.Metric.shares_count_by_paid_status,
     # SNO.FacebookObject.Metric.shares_count_by_type,
     # SNO.FacebookObject.Metric.user_posts_average_response_time,
@@ -81,23 +81,36 @@ fb_fields = [
 
 # Get profiles added to your account
 profiles = fb.get_profiles()
-
-
 profiles_json = json.loads(profiles)
 
+# Contains profile labels
 profiles
+# Get profile IDs by labels
 
 
-id_ = profiles_json['profiles'][0]['id']
+def get_profile_id_by_labels(profiles_json, label=None):
+    """
+    Takes the get_profiles json from socialbakers and return a list of profile_id by labels
+    """
+    return [profiles_json['profiles'][i]['id'] for i in range(len(profiles_json['profiles']))
+            if label in profiles_json['profiles'][i]['sbks_labels']]
+
+
+ls_labels = ["APAC", "Competitor", "Competitor Central", "Competitor Local", "East Asia",
+             "Europe", "Global", "LAM", "MEA", "NAM", "Sony Mobile", "Sony Mobile Local"]
+
+dict_label_ids = {label: get_profile_id_by_labels(profiles_json, label) for label in ls_labels}
+
+
+# id_ = profiles_json['profiles'][0]['id']
 
 ids_ = [profiles_json['profiles'][i]['id']
         for i in range(len(profiles_json['profiles']))]
 
-# Get Metrics from each profile
-result = fb.get_metrics(start, end,
-                        ids_[:5], fb_fields)
+# Get Metrics from each profile waiting of 2sec to bypass the 25 profiles limit
+result = fb.get_metrics_split_profiles(start, end,
+                                       ids_, fb_fields)
 
-start
 
-end
-result
+with open('data.json', 'w') as outfile:
+    json.dump(result, outfile)
