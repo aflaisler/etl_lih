@@ -5,6 +5,7 @@ import os
 from socialbakers import api
 from socialbakersobjects import SocialNetworkObject as SNO
 from datetime import datetime, timedelta
+import collections
 
 weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday',
             'Friday', 'Saturday', 'Sunday']
@@ -99,10 +100,13 @@ def get_profile_id_by_labels(profiles_json, label=None):
 ls_labels = ["APAC", "Competitor", "Competitor Central", "Competitor Local", "East Asia",
              "Europe", "Global", "LAM", "MEA", "NAM", "Sony Mobile", "Sony Mobile Local"]
 
+# dictionary with label as key and ids as values
 dict_label_ids = {label: get_profile_id_by_labels(profiles_json, label) for label in ls_labels}
-
+dict_label_ids
 
 # id_ = profiles_json['profiles'][0]['id']
+# [profiles_json['profiles'][i]['name']
+#         for i in range(len(profiles_json['profiles']))]
 
 ids_ = [profiles_json['profiles'][i]['id']
         for i in range(len(profiles_json['profiles']))]
@@ -111,6 +115,26 @@ ids_ = [profiles_json['profiles'][i]['id']
 result = fb.get_metrics_split_profiles(start, end,
                                        ids_, fb_fields)
 
-
+# Dump the results
 with open('data.json', 'w') as outfile:
     json.dump(result, outfile)
+
+# Load the results
+result = json.load(open('data.json'))
+
+# Sum results over the period
+period_length = len(result['profiles'][0]['data'])
+
+dict1 = []
+for i in range(len(result['profiles'])):
+    # print result['profiles'][i]['data']
+    counter = collections.Counter()
+    for d in result['profiles'][i]['data']:
+        d['profile_id'] = result['profiles'][i]['id']
+        # print d
+        dict1.append(d)
+
+pd.DataFrame(dict1)
+
+
+#
