@@ -74,10 +74,14 @@ def df_results_period(result):
     # droping the date
     df.drop(['date'], axis=1, inplace=True)
     # grouping by profile_id
-    df_group = df.loc[:, ['profile_id', 'fans_change']].groupby(['profile_id'], as_index=False).sum()
+    df_group = df.loc[:, ['profile_id', 'fans_change', 'interactions_per_1000_fans']].groupby(['profile_id'], as_index=False).sum()
+
+    # Avg total fans
+    df_total = df.loc[:, ['profile_id', 'fans_count_lifetime']].groupby(['profile_id'], as_index=False).mean()
+    # Do a SQL like join
+    df_group = df_group.merge(df_total, on=['profile_id'])
     # renaming columns
-    df_group.rename(columns={"fans_change": "Total Change in Total Fans"}, inplace=True)
-    df_group['Total Fans'] = df['fans_count_lifetime']
+    df_group.rename(columns={"fans_change": "Total Change in Total Fans", "fans_count_lifetime": "Total Fans"}, inplace=True)
     # Relative Change in Total Fans
     df_group['Relative Change in Total Fans'] = np.round(df_group["Total Change in Total Fans"] * 100 / df_group["Total Fans"], 2)
     # df_group
@@ -118,8 +122,9 @@ if __name__ == "__main__":
     print "Getting the results..."
     # result = fb.get_metrics_split_profiles(start, end, ids_, fb_fields)
     # testing only on Sony Mobile
+    sony_AR = "134604246572113"
     id_sony_global = "35313373389"
-    result = fb.get_metrics_split_profiles(start, end, [id_sony_global], fb_fields)
+    result = fb.get_metrics_split_profiles(start, end, [id_sony_global, sony_AR], fb_fields)
     # result['profiles']
 
     # Dump the results into a json
