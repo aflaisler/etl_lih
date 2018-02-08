@@ -74,17 +74,37 @@ def df_results_period(result):
     # droping the date
     df.drop(['date'], axis=1, inplace=True)
     # grouping by profile_id
-    df_group = df.loc[:, ['profile_id', 'fans_change', 'interactions_per_1000_fans']].groupby(['profile_id'], as_index=False).sum()
+    df_group = df.loc[:, ['profile_id',
+                          'fans_change',
+                          'interactions_per_1000_fans',
+                          'interactions_count',
+                          'reactions_count',
+                          'shares_count',
+                          'comments_count',
+                          'page_posts_count',
+                          'user_posts_count',
+                          'user_posts_responded_count'
+                          ]].groupby(['profile_id'], as_index=False).sum()
 
     # Avg total fans
     df_total = df.loc[:, ['profile_id', 'fans_count_lifetime']].groupby(['profile_id'], as_index=False).mean()
     # Do a SQL like join
     df_group = df_group.merge(df_total, on=['profile_id'])
     # renaming columns
-    df_group.rename(columns={"fans_change": "Total Change in Total Fans", "fans_count_lifetime": "Total Fans"}, inplace=True)
+    df_group.rename(columns={"fans_change": "Total Change in Total Fans",
+                             "fans_count_lifetime": "Total Fans",
+                             "interactions_count": "Sum of Interactions",
+                             "reactions_count": "Sum of Reactions",
+                             "shares_count": "Sum of Shares",
+                             "comments_count": "Sum of Comments",
+                             "page_posts_count": "Sum of Page Posts",
+                             "user_posts_count": "Sum of User Posts",
+                             "user_posts_responded_count": "Sum of Responded User Posts"}, inplace=True)
     # Relative Change in Total Fans
     df_group['Relative Change in Total Fans'] = np.round(df_group["Total Change in Total Fans"] * 100 / df_group["Total Fans"], 2)
     # df_group
+    # Avg Interactions per 1000 Fans per Post
+    df_group['Avg Interactions per 1000 Fans per Post'] = np.nan
     return df_group
 
 
@@ -102,7 +122,14 @@ if __name__ == "__main__":
     # fb fields to retrieve from the api
     fb_fields = [SNO.FacebookObject.Metric.fans_count_lifetime,
                  SNO.FacebookObject.Metric.fans_change,
-                 SNO.FacebookObject.Metric.interactions_per_1000_fans]
+                 SNO.FacebookObject.Metric.interactions_per_1000_fans,
+                 SNO.FacebookObject.Metric.interactions_count,
+                 SNO.FacebookObject.Metric.reactions_count,
+                 SNO.FacebookObject.Metric.shares_count,
+                 SNO.FacebookObject.Metric.comments_count,
+                 SNO.FacebookObject.Metric.page_posts_count,
+                 SNO.FacebookObject.Metric.user_posts_count,
+                 SNO.FacebookObject.Metric.user_posts_responded_count]
 
     # Initialize the api and get the list of profiles in the account
     print "API initialisation..."
@@ -142,3 +169,6 @@ if __name__ == "__main__":
     df = df_results_period(result)
     print "Extract of the report:"
     print df.head()
+
+
+#
