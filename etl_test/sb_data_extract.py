@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 import pandas as pd
 import json
@@ -29,10 +30,13 @@ def get_previous_week_date(dayname, start_=False):
 
 
 # Initialize SocialbakersApi and return a FacebookObject
-def init_socialbackers_api(credentials_path="/client/credentials.json"):
-    # get the socialbakers api secret key
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    sb_credentials = json.load(open(dir_path + credentials_path))
+def init_socialbackers_api(credentials_path="client/credentials.json"):
+    # get the socialbakers api secret key use the absolute path in production
+    try:
+        filepath = os.path.dirname(os.path.realpath(__file__)) + "/" + credentials_path
+    except:
+        filepath = credentials_path
+    sb_credentials = json.load(open(filepath))
     token = sb_credentials['socialbakers']['token']
     secret = sb_credentials['socialbakers']['secret']
     # Initialize API
@@ -52,25 +56,32 @@ def get_profile_id_by_labels(profiles_json, label=None):
 
 
 # Sum results over the period
-def sum_results_period(result):
+def df_results_period(result):
     """
-    Take a json of metrics return a pandas df grouping by profile_id
+    - Take a json of metrics return a pandas df grouping by profile_id
+    - Calculate couple of metrics for the report
     """
-    dict1 = []
+    ls_dict = []
     for i in range(len(result['profiles'])):
         # print result['profiles'][i]['data']
         counter = collections.Counter()
         for d in result['profiles'][i]['data']:
             d['profile_id'] = result['profiles'][i]['id']
             # print d
-            dict1.append(d)
+            ls_dict.append(d)
     # Converting the list of dictionary into a pandas DataFrame
-    df = pd.DataFrame(dict1)
+    df = pd.DataFrame(ls_dict)
     # droping the date
     df.drop(['date'], axis=1, inplace=True)
     # grouping by profile_id
-    df_out = df.groupby(['profile_id'], as_index=False).sum()
-    return df_out
+    df_group = df.loc[:, ['profile_id', 'fans_change']].groupby(['profile_id'], as_index=False).sum()
+    # renaming columns
+    df_group.rename(columns={"fans_change": "Total Change in Total Fans"}, inplace=True)
+    df_group['Total Fans'] = df['fans_count_lifetime']
+    # Relative Change in Total Fans
+    df_group['Relative Change in Total Fans'] = np.round(df_group["Total Change in Total Fans"] * 100 / df_group["Total Fans"], 2)
+    # df_group
+    return df_group
 
 
 # Helper to save report to mongodb
@@ -86,11 +97,12 @@ if __name__ == "__main__":
 
     # fb fields to retrieve from the api
     fb_fields = [SNO.FacebookObject.Metric.fans_count_lifetime,
-                 SNO.FacebookObject.Metric.fans_change]
+                 SNO.FacebookObject.Metric.fans_change,
+                 SNO.FacebookObject.Metric.interactions_per_1000_fans]
 
     # Initialize the api and get the list of profiles in the account
     print "API initialisation..."
-    fb = init_socialbackers_api(credentials_path="/client/credentials.json")
+    fb = init_socialbackers_api(credentials_path="client/credentials.json")
     profiles = fb.get_profiles()
     profiles_json = json.loads(profiles)
     ids_ = [profiles_json['profiles'][i]['id'] for i in range(len(profiles_json['profiles']))]
@@ -104,13 +116,16 @@ if __name__ == "__main__":
 
     # Get Metrics from each profile waiting of 2sec to bypass the 25 profiles limit
     print "Getting the results..."
-    result = fb.get_metrics_split_profiles(start, end, ids_, fb_fields)
+    # result = fb.get_metrics_split_profiles(start, end, ids_, fb_fields)
+    # testing only on Sony Mobile
+    id_sony_global = "35313373389"
+    result = fb.get_metrics_split_profiles(start, end, [id_sony_global], fb_fields)
     # result['profiles']
 
     # Dump the results into a json
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    with open(dir_path + '/data_S.json', 'w') as outfile:
-        json.dump(result, outfile)
+    # dir_path = os.path.dirname(os.path.realpath(__file__))
+    # with open(dir_path + '/data_S.json', 'w') as outfile:
+    # json.dump(result, outfile)
 
     # Store the results into mongodb
     mongo_storage_helper(collection_name="fb_platform_overview", json=result['profiles'])
@@ -119,6 +134,6 @@ if __name__ == "__main__":
     # result = json.load(open('data.json'))
 
     # Sum results over the period and return a pandas dataframe
-    df = sum_results_period(result)
+    df = df_results_period(result)
     print "Extract of the report:"
     print df.head()
