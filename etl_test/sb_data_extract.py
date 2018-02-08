@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import json
 import os
-from socialbakers import api
-from socialbakersobjects import SocialNetworkObject as SNO
+from socialbakers_api import api
+from socialbakers_api import SocialNetworkObject as SNO
 from datetime import datetime, timedelta
 import collections
 from pymongo import MongoClient
