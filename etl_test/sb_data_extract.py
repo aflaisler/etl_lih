@@ -6,6 +6,7 @@ from socialbakers import api
 from socialbakersobjects import SocialNetworkObject as SNO
 from datetime import datetime, timedelta
 import collections
+from pymongo import MongoClient
 
 
 weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday',
@@ -72,6 +73,12 @@ def sum_results_period(result):
     return df_out
 
 
+# Helper to save report to mongodb
+def mongo_storage_helper(collection_name, json):
+    client = MongoClient()
+    client.socialbackers[collection_name].insert_many(json)
+
+
 if __name__ == "__main__":
     # List all profile labels
     ls_labels = ["APAC", "Competitor", "Competitor Central", "Competitor Local", "East Asia",
@@ -98,10 +105,15 @@ if __name__ == "__main__":
     # Get Metrics from each profile waiting of 2sec to bypass the 25 profiles limit
     print "Getting the results..."
     result = fb.get_metrics_split_profiles(start, end, ids_, fb_fields)
+    # result['profiles']
 
-    # Dump the results
-    with open('data.json', 'w') as outfile:
+    # Dump the results into a json
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    with open(dir_path + '/data_S.json', 'w') as outfile:
         json.dump(result, outfile)
+
+    # Store the results into mongodb
+    mongo_storage_helper(collection_name="fb_platform_overview", json=result['profiles'])
 
     # Load the results
     # result = json.load(open('data.json'))
