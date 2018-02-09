@@ -7,18 +7,20 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
 # remember to add access right at view level
-KEY_FILE_LOCATION = 'testy.json'
-VIEW_ID = 'xxxxxxxx'
+VIEW_ID = '56018391'
 
 
-def initialize_analyticsreporting():
+def initialize_analyticsreporting(credentials_path="client/GA_API_service_account.json"):
     """Initializes an Analytics Reporting API V4 service object.
 
     Returns:
       An authorized Analytics Reporting API V4 service object.
     """
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(
-        KEY_FILE_LOCATION, SCOPES)
+    try:
+        filepath = os.path.dirname(os.path.realpath(__file__)) + "/" + credentials_path
+    except:
+        filepath = credentials_path
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(filepath, SCOPES)
 
     # Build the service object.
     analytics = build('analyticsreporting', 'v4', credentials=credentials)
