@@ -1,4 +1,6 @@
 # sensitive
+aquila_aws
+aquila_aws.pub
 *.xlsx
 *.xls
 *.json
