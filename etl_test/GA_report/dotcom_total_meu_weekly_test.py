@@ -15,7 +15,7 @@ class TestReport(unittest.TestCase):
 
     def test_date_range(self):
         valid_access, analytics = report.initialize_analyticsreporting()
-        json = report.get_report(analytics)
+        json = report.get_report(analytics, '7daysAgo', 'today')
         # select unique nb of days
         # code here
         self.assertEqual(nb_days, 7)

@@ -23,7 +23,7 @@ def initialize_analyticsreporting(credentials_path="client/GA_API_service_accoun
     return 1, analytics
 
 
-def get_report(analytics):
+def get_report(analytics, start_date, end_date):
     """Queries the Analytics Reporting API V4.
 
     Args:
@@ -36,44 +36,83 @@ def get_report(analytics):
             'reportRequests': [
                 {
                     'viewId': VIEW_ID,
-                    'dateRanges': [{'startDate': '7daysAgo', 'endDate': 'today'}],
-                    'metrics': [{'expression': 'ga:sessions'}],
-                    'dimensions': [{'name': 'ga:isoWeek'}, {'name': 'ga:country'}, {'name': 'ga:segment'}],
-                    "segments": [{'segmentId': 'gaid::bYSo65dpSxyyR1CjanHDyQ'}]
+                    'dateRanges': [{'startDate': start_date, 'endDate': end_date}],
+                    'metrics': [{'expression': 'ga:users'},
+                                {'expression': 'ga:uniquePurchases'}],
+                    'dimensions': [{'name': 'ga:isoYearIsoWeek'},
+                                   {'name': 'ga:country'},
+                                   {'name': 'ga:segment'}],
+                    'segments': [{'segmentId': 'gaid::bYSo65dpSxyyR1CjanHDyQ'},
+                                 {'segmentId': 'gaid::-1'},
+                                 {'segmentId': 'gaid::Dhbf_lhSRm-XK2oFGM5POg'}]
                 }]
         }).execute()
 
 
-def print_response(response):
-    """Parses and prints the Analytics Reporting API V4 response.
+def format_response(response):
+    ls = []
 
-    Args:
-      response: An Analytics Reporting API V4 response.
-    """
-    for report in response.get('reports', []):
-        columnHeader = report.get('columnHeader', {})
-        dimensionHeaders = columnHeader.get('dimensions', [])
-        metricHeaders = columnHeader.get(
-            'metricHeader', {}).get('metricHeaderEntries', [])
+    # get report data
+    for report in response['reports']:
+        # set column headers
+        columnHeader = report['columnHeader']
+        dimensionHeaders = columnHeader['dimensions']
+        metricHeaders = columnHeader['metricHeader']['metricHeaderEntries']
+        rows = report['data']['rows']
 
-        for row in report.get('data', {}).get('rows', []):
-            dimensions = row.get('dimensions', [])
-            dateRangeValues = row.get('metrics', [])
+    for row in rows:
+        # create dict for each row
+        dict_ = {}
+        dimensions = row['dimensions']
+        dateRangeValues = row['metrics']
 
-            for header, dimension in zip(dimensionHeaders, dimensions):
-                print header + ': ' + dimension
+        # fill dict with dimension header (key) and dimension value (value)
+        for header, dimension in zip(dimensionHeaders, dimensions):
+            dict_[header] = dimension
 
-            for i, values in enumerate(dateRangeValues):
-                print 'Date range: ' + str(i)
-                for metricHeader, value in zip(metricHeaders, values.get('values')):
-                    print metricHeader.get('name') + ': ' + value
+        # fill dict with metric header (key) and metric value (value)
+        for i, values in enumerate(dateRangeValues):
+            for metric, value in zip(metricHeaders, values['values']):
+                # set int as int, float a float
+                if ',' in value or ',' in value:
+                    dict_[metric['name']] = float(value)
+                else:
+                    dict_[metric['name']] = int(value)
+
+        ls.append(dict_)
+
+    df = pd.DataFrame(ls)
+    return df
 
 
 def main():
     valid_access, analytics = initialize_analyticsreporting()
-    response = get_report(analytics)
-    print_response(response)
+    response = get_report(analytics, '7daysAgo', 'today')
+    format_response(response)
 
 
 if __name__ == '__main__':
     main()
+
+
+start_date, end_date = '7daysAgo', 'today'
+
+r = analytics.reports().batchGet(
+    body={
+        'reportRequests': [
+            {
+                'viewId': VIEW_ID,
+                'dateRanges': [{'startDate': start_date, 'endDate': end_date}],
+                'metrics': [{'expression': 'ga:users'},
+                            {'expression': 'ga:uniquePurchases'}],
+                'dimensions': [{'name': 'ga:isoYearIsoWeek'},
+                               {'name': 'ga:country'},
+                               {'name': 'ga:segment'}],
+                'segments': [{'segmentId': 'gaid::bYSo65dpSxyyR1CjanHDyQ'},
+                             {'segmentId': 'gaid::-1'},
+                             {'segmentId': 'gaid::Dhbf_lhSRm-XK2oFGM5POg'}]
+            }]
+    }).execute()
+
+
+analytics.reports().batchGet(1000)
