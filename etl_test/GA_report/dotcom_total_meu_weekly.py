@@ -38,10 +38,10 @@ def get_report(analytics):
                     'viewId': VIEW_ID,
                     'dateRanges': [{'startDate': '7daysAgo', 'endDate': 'today'}],
                     'metrics': [{'expression': 'ga:sessions'}],
-                    'dimensions': [{'name': 'ga:country'}]
+                    'dimensions': [{'name': 'ga:isoWeek'}, {'name': 'ga:country'}, {'name': 'ga:segment'}],
+                    "segments": [{'segmentId': 'gaid::bYSo65dpSxyyR1CjanHDyQ'}]
                 }]
-        }
-    ).execute()
+        }).execute()
 
 
 def print_response(response):
