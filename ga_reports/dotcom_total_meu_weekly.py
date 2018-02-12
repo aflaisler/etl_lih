@@ -154,3 +154,5 @@ if __name__ == '__main__':
     columns = ['ga:country', 'ga:isoYearIsoWeek', 'ga:segment', 'ga:uniquePurchases', 'ga:users']
 
     df = main(columns=columns, start_date='7daysAgo', end_date='yesterday')
+
+    df.to_csv('./data/dotcom_total_meu_weekly.csv', encoding='utf-8')
