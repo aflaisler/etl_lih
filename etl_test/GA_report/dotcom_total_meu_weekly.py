@@ -93,26 +93,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-start_date, end_date = '7daysAgo', 'today'
-
-r = analytics.reports().batchGet(
-    body={
-        'reportRequests': [
-            {
-                'viewId': VIEW_ID,
-                'dateRanges': [{'startDate': start_date, 'endDate': end_date}],
-                'metrics': [{'expression': 'ga:users'},
-                            {'expression': 'ga:uniquePurchases'}],
-                'dimensions': [{'name': 'ga:isoYearIsoWeek'},
-                               {'name': 'ga:country'},
-                               {'name': 'ga:segment'}],
-                'segments': [{'segmentId': 'gaid::bYSo65dpSxyyR1CjanHDyQ'},
-                             {'segmentId': 'gaid::-1'},
-                             {'segmentId': 'gaid::Dhbf_lhSRm-XK2oFGM5POg'}]
-            }]
-    }).execute()
-
-
-analytics.reports().batchGet(1000)
