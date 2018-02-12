@@ -1,5 +1,7 @@
 from apiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
+import numpy as np
+import pandas as pd
 
 SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
 # Sony all traffic unfiltered
@@ -52,16 +54,15 @@ def get_report(analytics, start_date, end_date, useResourceQuotas=True, page_tok
         }).execute()
 
 
-a
-a['reports']
-
-len(a['reports'][0]['data']['rows'])
-len(b['reports'][0]['data']['rows'])
-
-format_response(a)
-format_response(b)
-
 def format_response(response):
+    """Take a reponse from Google analytics report api v4 and format it into a
+    pandas dataframe
+
+    Args:
+        GA reporting api v4 response (json)
+    Returns:
+        a pandas dataframe
+    """
     ls = []
 
     # get report data
@@ -97,25 +98,35 @@ def format_response(response):
     return df
 
 
-def main():
+def main(columns, start_date, end_date):
+    """ Init. GA reporting api and query it until all the results have been returned.
+        By default the page size is set to 1000 in the get_report function.
+
+    Args:
+        columns of the output dataframe, start and end date of the query
+    Returns:
+        pandas df
+    """
     valid_access, analytics = initialize_analyticsreporting()
     # start getting report at index 0
     response_page_token = 0
     # initialize dataframe for report
-    df = pd.DataFrame(columns=['ga:country', 'ga:isoYearIsoWeek', 'ga:segment', 'ga:uniquePurchases', 'ga:users'])
+    df = pd.DataFrame(columns=columns)
     while response_page_token is not None:
-        response = get_report(analytics, '7daysAgo', 'today', page_token=response_page_token)
+        response = get_report(analytics, start_date=start_date, end_date=end_date, page_token=response_page_token)
         df = df.append(format_response(response), ignore_index=True)
         if response['reports'][0].get('nextPageToken', None) is not None:
             response_page_token = response['reports'][0]['nextPageToken']
         else:
             response_page_token = None
+    # Reset index (not actually necessary here)
+    df.reset_index(drop=True, inplace=True)
     # return dataframe with all the api replies concatanated
-    return df.reset_index(drop=True, inplace=True)
+    return df
 
 
 if __name__ == '__main__':
-    main()
+    columns = ['ga:country', 'ga:isoYearIsoWeek', 'ga:segment', 'ga:uniquePurchases', 'ga:users']
+    columns = df.columns.values
 
-
-start_date, end_date = '7daysAgo', 'today'
+    df = main(columns=columns, start_date='7daysAgo', end_date='today')
