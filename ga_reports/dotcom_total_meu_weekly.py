@@ -10,7 +10,6 @@ VIEW_ID = '56018391'
 
 def initialize_analyticsreporting(credentials_path="client/GA_API_service_account.json"):
     """Initializes an Analytics Reporting API V4 service object.
-
     Returns:
       An authorized Analytics Reporting API V4 service object.
     """
@@ -27,7 +26,6 @@ def initialize_analyticsreporting(credentials_path="client/GA_API_service_accoun
 
 def get_report(analytics, start_date, end_date, useResourceQuotas=True, page_token=0):
     """Queries the Analytics Reporting API V4.
-
     Args:
       analytics: An authorized Analytics Reporting API V4 service object.
     Returns:
@@ -54,17 +52,45 @@ def get_report(analytics, start_date, end_date, useResourceQuotas=True, page_tok
         }).execute()
 
 
+def get_report_test(analytics, start_date, end_date, useResourceQuotas=False, page_token=0):
+    """Test function using "get_report" (above) but adding the date at a day level
+        Queries the Analytics Reporting API V4.
+    Args:
+      analytics: An authorized Analytics Reporting API V4 service object.
+    Returns:
+      The Analytics Reporting API V4 response.
+    """
+    useResourceQuotas_bool = 'true' if useResourceQuotas else 'false'
+    return analytics.reports().batchGet(
+        body={
+            'reportRequests': [
+                {
+                    'viewId': VIEW_ID,
+                    'pageToken': str(page_token),
+                    'samplingLevel': 'LARGE',
+                    'pageSize': '10000',
+                    'dateRanges': [{'startDate': start_date, 'endDate': end_date}],
+                    'metrics': [{'expression': 'ga:users'},
+                                {'expression': 'ga:uniquePurchases'}],
+                    'dimensions': [{'name': 'ga:date'},
+                                   {'name': 'ga:country'},
+                                   {'name': 'ga:segment'}],
+                    'segments': [{'segmentId': 'gaid::bYSo65dpSxyyR1CjanHDyQ'},
+                                 {'segmentId': 'gaid::-1'},
+                                 {'segmentId': 'gaid::Dhbf_lhSRm-XK2oFGM5POg'}]
+                }],
+            'useResourceQuotas': useResourceQuotas_bool,
+        }).execute()
+
 def format_response(response):
     """Take a reponse from Google analytics report api v4 and format it into a
     pandas dataframe
-
     Args:
         GA reporting api v4 response (json)
     Returns:
         a pandas dataframe
     """
     ls = []
-
     # get report data
     for report in response['reports']:
         # set column headers
@@ -78,7 +104,6 @@ def format_response(response):
         dict_ = {}
         dimensions = row['dimensions']
         dateRangeValues = row['metrics']
-
         # fill dict with dimension header (key) and dimension value (value)
         for header, dimension in zip(dimensionHeaders, dimensions):
             dict_[header] = dimension
@@ -91,9 +116,7 @@ def format_response(response):
                     dict_[metric['name']] = float(value)
                 else:
                     dict_[metric['name']] = int(value)
-
         ls.append(dict_)
-
     df = pd.DataFrame(ls)
     return df
 
@@ -121,12 +144,13 @@ def main(columns, start_date, end_date):
             response_page_token = None
     # Reset index (not actually necessary here)
     df.reset_index(drop=True, inplace=True)
+    # check quotas
+    print response.get('resourceQuotasRemaining', '')
     # return dataframe with all the api replies concatanated
     return df
 
 
 if __name__ == '__main__':
     columns = ['ga:country', 'ga:isoYearIsoWeek', 'ga:segment', 'ga:uniquePurchases', 'ga:users']
-    columns = df.columns.values
 
-    df = main(columns=columns, start_date='7daysAgo', end_date='today')
+    df = main(columns=columns, start_date='7daysAgo', end_date='yesterday')
