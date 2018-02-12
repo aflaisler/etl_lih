@@ -1,4 +1,4 @@
-from boto.s3.connection import S3Connection
+import boto3
 import json
 
 def s3_access_keys(credentials_path="client/credentials.json"):
@@ -14,8 +14,12 @@ def s3_access_keys(credentials_path="client/credentials.json"):
 
 
 key, secret = s3_access_keys(credentials_path="client/credentials.json")
-conn = S3Connection(key, secret)
+conn = boto3.Session(aws_access_key_id=sb_credentials['s3accessKeys']['AWS_ACCESS_KEY_ID'],
+                     aws_secret_access_key=sb_credentials['s3accessKeys']['AWS_SECRET_ACCESS_KEY'],
+                     region_name='eu-west-1')
 
-bucket = conn.get_bucket('ai-sony-automation')
-for obj in bucket.get_all_keys():
-    print(obj.key)
+s3 = conn.client('s3')
+
+s3.list_objects_v2(Bucket='ai-sony-automation')
+
+s3.upload_file('test.ipynb', 'ai-sony-automation', 'test.ipynb')
