@@ -23,7 +23,7 @@ def initialize_analyticsreporting(credentials_path="client/GA_API_service_accoun
     return 1, analytics
 
 
-def get_report(analytics, start_date, end_date):
+def get_report(analytics, start_date, end_date, useResourceQuotas=True, page_token=0):
     """Queries the Analytics Reporting API V4.
 
     Args:
@@ -31,11 +31,13 @@ def get_report(analytics, start_date, end_date):
     Returns:
       The Analytics Reporting API V4 response.
     """
+    useResourceQuotas_bool = 'true' if useResourceQuotas else 'false'
     return analytics.reports().batchGet(
         body={
             'reportRequests': [
                 {
                     'viewId': VIEW_ID,
+                    'pageToken': str(page_token),
                     'dateRanges': [{'startDate': start_date, 'endDate': end_date}],
                     'metrics': [{'expression': 'ga:users'},
                                 {'expression': 'ga:uniquePurchases'}],
@@ -45,9 +47,19 @@ def get_report(analytics, start_date, end_date):
                     'segments': [{'segmentId': 'gaid::bYSo65dpSxyyR1CjanHDyQ'},
                                  {'segmentId': 'gaid::-1'},
                                  {'segmentId': 'gaid::Dhbf_lhSRm-XK2oFGM5POg'}]
-                }]
+                }],
+            'useResourceQuotas': useResourceQuotas_bool,
         }).execute()
 
+
+a
+a['reports']
+
+len(a['reports'][0]['data']['rows'])
+len(b['reports'][0]['data']['rows'])
+
+format_response(a)
+format_response(b)
 
 def format_response(response):
     ls = []
@@ -87,9 +99,23 @@ def format_response(response):
 
 def main():
     valid_access, analytics = initialize_analyticsreporting()
-    response = get_report(analytics, '7daysAgo', 'today')
-    format_response(response)
+    # start getting report at index 0
+    response_page_token = 0
+    # initialize dataframe for report
+    df = pd.DataFrame(columns=['ga:country', 'ga:isoYearIsoWeek', 'ga:segment', 'ga:uniquePurchases', 'ga:users'])
+    while response_page_token is not None:
+        response = get_report(analytics, '7daysAgo', 'today', page_token=response_page_token)
+        df = df.append(format_response(response), ignore_index=True)
+        if response['reports'][0].get('nextPageToken', None) is not None:
+            response_page_token = response['reports'][0]['nextPageToken']
+        else:
+            response_page_token = None
+    # return dataframe with all the api replies concatanated
+    return df.reset_index(drop=True, inplace=True)
 
 
 if __name__ == '__main__':
     main()
+
+
+start_date, end_date = '7daysAgo', 'today'
