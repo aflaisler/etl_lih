@@ -158,4 +158,4 @@ if __name__ == '__main__':
     df = main(columns=columns, start_date='7daysAgo', end_date='yesterday')
     filepath = os.path.dirname(os.path.realpath(__file__))
     df.to_csv(filepath + '/data/dotcom_total_meu_weekly_{}.csv'.format(datetime.today().strftime('%m%d_%H%M')), encoding='utf-8')
-    df.to_csv('/data/dotcom_total_meu_weekly.csv', encoding='utf-8')
+    df.to_csv('data/dotcom_total_meu_weekly.csv', encoding='utf-8')
