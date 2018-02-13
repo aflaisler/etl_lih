@@ -7,6 +7,7 @@ import unittest as unittest
 import dotcom_total_meu_weekly as report
 import numpy as np
 import pandas as pd
+import os
 
 class TestReport(unittest.TestCase):
 

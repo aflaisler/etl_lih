@@ -3,6 +3,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import numpy as np
 import pandas as pd
 from datetime import datetime
+import os
 
 SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
 # Sony all traffic unfiltered
@@ -155,5 +156,5 @@ if __name__ == '__main__':
     columns = ['ga:country', 'ga:isoYearIsoWeek', 'ga:segment', 'ga:uniquePurchases', 'ga:users']
 
     df = main(columns=columns, start_date='7daysAgo', end_date='yesterday')
-
-    df.to_csv('./data/dotcom_total_meu_weekly_{}.csv'.format(datetime.today().strftime('%m%d_%H%M')), encoding='utf-8')
+    filepath = os.path.dirname(os.path.realpath(__file__))
+    df.to_csv(filepath + '/data/dotcom_total_meu_weekly_{}.csv'.format(datetime.today().strftime('%m%d_%H%M')), encoding='utf-8')
