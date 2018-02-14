@@ -37,7 +37,7 @@ class TestReport(unittest.TestCase):
         data = report.get_report(analytics, '7daysAgo', 'yesterday', useResourceQuotas=True, page_token=0)
         rc = data['reports'][0]['data']['rowCount']
         columns = ['ga:country', 'ga:isoYearIsoWeek', 'ga:segment', 'ga:uniquePurchases', 'ga:users']
-        df = report.main(columns=columns, start_date='7daysAgo', end_date='yesterday')
+        df = report.main(columns=columns, columns_out=columns, start_date='7daysAgo', end_date='yesterday')
         df.shape
         self.assertEqual(df.shape, (rc, len(columns)))
 

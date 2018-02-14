@@ -1,5 +1,6 @@
 from boto.s3.connection import S3Connection
 import json
+import os
 
 def s3_access_keys(credentials_path="client/credentials.json"):
     # get the socialbakers api secret key use the absolute path in production

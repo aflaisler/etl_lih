@@ -123,7 +123,7 @@ def format_response(response):
     return df
 
 
-def main(columns, start_date, end_date):
+def main(columns, columns_out, start_date, end_date):
     """ Init. GA reporting api and query it until all the results have been returned.
         By default the page size is set to 1000 in the get_report function.
 
@@ -139,11 +139,15 @@ def main(columns, start_date, end_date):
     df = pd.DataFrame(columns=columns)
     while response_page_token is not None:
         response = get_report(analytics, start_date=start_date, end_date=end_date, page_token=response_page_token)
-        df = df.append(format_response(response), ignore_index=True)
+        df = df.append(format_response(response))
         if response['reports'][0].get('nextPageToken', None) is not None:
             response_page_token = response['reports'][0]['nextPageToken']
         else:
             response_page_token = None
+    # reorder df
+    df = df[columns]
+    # rename columns to fit discovery etls
+    df.columns = columns_out
     # Reset index (not actually necessary here)
     df.reset_index(drop=True, inplace=True)
     # check quotas
@@ -153,9 +157,13 @@ def main(columns, start_date, end_date):
 
 
 if __name__ == '__main__':
-    columns = ['ga:country', 'ga:isoYearIsoWeek', 'ga:segment', 'ga:uniquePurchases', 'ga:users']
+    # columns from google analytics api fields name
+    ga_columns = ['ga:isoYearIsoWeek', 'ga:country', 'ga:segment', 'ga:users', 'ga:uniquePurchases']
+    # output column names
+    out_columns = ['ISO Week of ISO Year', 'Country', 'Segment', 'Users', 'Unique Purchases']
 
-    df = main(columns=columns, start_date='7daysAgo', end_date='yesterday')
-    filepath = os.path.dirname(os.path.realpath(__file__))
-    df.to_csv(filepath + '/data/dotcom_total_meu_weekly_{}.csv'.format(datetime.today().strftime('%m%d_%H%M')), encoding='utf-8')
-    df.to_csv(filepath + '/data/dotcom_total_meu_weekly.csv', encoding='utf-8')
+    df = main(columns=ga_columns, columns_out=out_columns, start_date='7daysAgo', end_date='yesterday')
+    filepath = os.path.dirname(os.path.realpath(__file__)) + "/"
+    df.to_csv(filepath + 'data/dotcom_total_meu_weekly_{}.csv'.format(datetime.today().strftime('%m%d_%H%M')),
+              encoding='utf-8', index=False)
+    df.to_csv(filepath + 'data/dotcom_total_meu_weekly.csv', encoding='utf-8', index=False)
