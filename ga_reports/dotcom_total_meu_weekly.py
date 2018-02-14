@@ -161,7 +161,7 @@ if __name__ == '__main__':
     ga_columns = ['ga:isoYearIsoWeek', 'ga:country', 'ga:segment', 'ga:users', 'ga:uniquePurchases']
     # output column names
     out_columns = ['ISO Week of ISO Year', 'Country', 'Segment', 'Users', 'Unique Purchases']
-
+    # call all the methods
     df = main(columns=ga_columns, columns_out=out_columns, start_date='7daysAgo', end_date='yesterday')
     filepath = os.path.dirname(os.path.realpath(__file__)) + "/"
     df.to_csv(filepath + 'data/dotcom_total_meu_weekly_{}.csv'.format(datetime.today().strftime('%m%d_%H%M')),
